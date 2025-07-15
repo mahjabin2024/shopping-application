@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Shopping Page</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <!-- Custom Styles -->
+    <link rel="stylesheet" href="style2.css" />
+</head>
+
+<body>
+    <h1>🛒 Welcome to the Shop</h1>
+
+    <!-- Auth Section -->
+    <div id="auth-section">
+        <input type="email" id="email" placeholder="Email" />
+        <input type="password" id="password" placeholder="Password" />
+        <button onclick="signUp()">Sign Up</button>
+        <button onclick="logIn()">Log In</button>
+        <button onclick="logOut()">Log Out</button>
+        <p id="user-status">Not logged in</p>
+    </div>
+
+    <!-- Product Section -->
+    <div id="products"></div>
+
+    <!-- Cart Section -->
+    <h2>🧺 Cart</h2>
+    <ul id="cartList"></ul>
+    <button onclick="purchase()">Purchase</button>
+
+    <script>
+        // --- Firebase Configuration ---
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9HYugj4J__u_nILLwHXj91WPxsZipsVo",
+            authDomain: "test-app-fc997.firebaseapp.com",
+            databaseURL: "https://test-app-fc997-default-rtdb.firebaseio.com",
+            projectId: "test-app-fc997",
+            storageBucket: "test-app-fc997.appspot.com",
+            messagingSenderId: "913295044562",
+            appId: "1:913295044562:web:7b46d7223a6e109d79220b",
+            measurementId: "G-3GX4JBEQ2Z"
+        };
+
+        // --- Initialize Firebase ---
+        firebase.initializeApp(firebaseConfig);
+        const auth = firebase.auth();
+        const db = firebase.firestore();
+
+        // --- Authentication ---
+        auth.onAuthStateChanged(user => {
+            const status = document.getElementById("user-status");
+            status.innerText = user ? `Logged in as ${user.email}` : "Not logged in";
+        });
+
+        function signUp() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            auth.createUserWithEmailAndPassword(email, password)
+                .then(() => alert("Sign-up successful!"))
+                .catch(error => alert("Error: " + error.message));
+        }
+
+        function logIn() {
+            const email = document.getElementById("email").value;
+            const password = document.getElementById("password").value;
+            auth.signInWithEmailAndPassword(email, password)
+                .then(() => alert("Login successful!"))
+                .catch(error => alert("Error: " + error.message));
+        }
+
+        function logOut() {
+            auth.signOut()
+                .then(() => alert("Logged out."))
+                .catch(error => alert("Error: " + error.message));
+        }
+
+        // --- Product List ---
+        const products = [
+            { id: 1, name: "Product A", price: 10 },
+            { id: 2, name: "Product B", price: 20 },
+            { id: 3, name: "Product C", price: 30 }
+        ];
+
+        let cart = [];
+
+        // --- Render Products ---
+        window.onload = function () {
+            const productContainer = document.getElementById("products");
+            products.forEach(product => {
+                const button = document.createElement("button");
+                button.innerText = `Add ${product.name} - $${product.price}`;
+                button.onclick = () => addToCart(product);
+                productContainer.appendChild(button);
+            });
+        };
+
+        // --- Add Product to Cart ---
+        function addToCart(product) {
+            cart.push(product);
+            const cartList = document.getElementById("cartList");
+            const item = document.createElement("li");
+            item.innerText = `${product.name} - $${product.price}`;
+            cartList.appendChild(item);
+        }
+
+        // --- Purchase Handler ---
+        function purchase() {
+            const user = auth.currentUser;
+            if (!user) {
+                alert("You must be logged in to purchase!");
+                return;
+            }
+
+            const order = {
+                uid: user.uid,
+                email: user.email,
+                items: cart,
+                timestamp: new Date()
+            };
+
+            db.collection("orders").add(order)
+                .then(() => {
+                    alert("Purchase successful!");
+                    cart = [];
+                    document.getElementById("cartList").innerHTML = "";
+                })
+                .catch(error => {
+                    alert("Error saving order: " + error.message);
+                });
+        }
+    </script>
+</body>
+
+</html>
