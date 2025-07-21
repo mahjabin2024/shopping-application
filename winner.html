@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Today's Winner</title>
+
+    <!-- Firebase SDKs -->
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-firestore-compat.js"></script>
+
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+        }
+
+        h1 {
+            color: #2c3e50;
+        }
+
+        #winner {
+            font-size: 1.2em;
+            margin-top: 20px;
+        }
+
+        button {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+
+<body>
+    <h1>🏆 Today's Top Buyer</h1>
+    <div id="winner">Loading...</div>
+    <button onclick="window.location.href='shop.html'">⬅️ Back to Shop</button>
+
+    <script>
+        // Firebase Configuration
+        const firebaseConfig = {
+            apiKey: "AIzaSyD9HYugj4J__u_nILLwHXj91WPxsZipsVo",
+            authDomain: "test-app-fc997.firebaseapp.com",
+            databaseURL: "https://test-app-fc997-default-rtdb.firebaseio.com",
+            projectId: "test-app-fc997",
+            storageBucket: "test-app-fc997.appspot.com",
+            messagingSenderId: "913295044562",
+            appId: "1:913295044562:web:7b46d7223a6e109d79220b",
+            measurementId: "G-3GX4JBEQ2Z"
+        };
+
+        // Initialize Firebase
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.firestore();
+
+        // Helper to get today's date range
+        function getTodayDateRange() {
+            const now = new Date();
+            const start = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+            const end = new Date(start);
+            end.setDate(start.getDate() + 1);
+            return { start, end };
+        }
+
+        // Get and show the winner
+        async function getTodaysWinner() {
+            const { start, end } = getTodayDateRange();
+
+            try {
+                const snapshot = await db.collection("orders")
+                    .where("timestamp", ">=", start)
+                    .where("timestamp", "<", end)
+                    .get();
+
+                const totals = {};
+
+                snapshot.forEach(doc => {
+                    const data = doc.data();
+                    const total = data.items.reduce((sum, item) => sum + item.price, 0);
+                    if (!totals[data.email]) totals[data.email] = 0;
+                    totals[data.email] += total;
+                });
+
+                const entries = Object.entries(totals);
+                if (entries.length === 0) {
+                    document.getElementById("winner").innerText = "No purchases today.";
+                    return;
+                }
+
+                entries.sort((a, b) => b[1] - a[1]);
+                const [topEmail, topAmount] = entries[0];
+
+                document.getElementById("winner").innerText =
+                    `🏅 ${topEmail} with $${topAmount.toFixed(2)} in purchases.`;
+
+            } catch (error) {
+                document.getElementById("winner").innerText = "Error loading winner.";
+                console.error("Error:", error);
+            }
+        }
+
+        getTodaysWinner();
+    </script>
+</body>
+
+</html>

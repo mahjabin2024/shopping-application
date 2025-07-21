@@ -35,6 +35,7 @@
     <h2>🧺 Cart</h2>
     <ul id="cartList"></ul>
     <button onclick="purchase()">Purchase</button>
+    <button onclick="window.location.href='winner.html'">🏆 Today's Winner</button>
 
     <script>
         // --- Firebase Configuration ---
@@ -61,26 +62,45 @@
         });
 
         function signUp() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+            const emailInput = document.getElementById("email");
+            const passwordInput = document.getElementById("password");
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
             auth.createUserWithEmailAndPassword(email, password)
-                .then(() => alert("Sign-up successful!"))
+                .then(() => {
+                    alert("Sign-up successful!");
+                    emailInput.value = "";
+                    passwordInput.value = "";
+                })
                 .catch(error => alert("Error: " + error.message));
         }
 
         function logIn() {
-            const email = document.getElementById("email").value;
-            const password = document.getElementById("password").value;
+            const emailInput = document.getElementById("email");
+            const passwordInput = document.getElementById("password");
+            const email = emailInput.value;
+            const password = passwordInput.value;
+
             auth.signInWithEmailAndPassword(email, password)
-                .then(() => alert("Login successful!"))
+                .then(() => {
+                    alert("Login successful!");
+                    emailInput.value = "";
+                    passwordInput.value = "";
+                })
                 .catch(error => alert("Error: " + error.message));
         }
 
         function logOut() {
             auth.signOut()
-                .then(() => alert("Logged out."))
+                .then(() => {
+                    alert("Logged out.");
+                    document.getElementById("email").value = "";
+                    document.getElementById("password").value = "";
+                })
                 .catch(error => alert("Error: " + error.message));
         }
+
 
         // --- Product List ---
         const products = [
@@ -123,7 +143,8 @@
                 uid: user.uid,
                 email: user.email,
                 items: cart,
-                timestamp: new Date()
+                timestamp: firebase.firestore.Timestamp.fromDate(new Date())
+
             };
 
             db.collection("orders").add(order)
